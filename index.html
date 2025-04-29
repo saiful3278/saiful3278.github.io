@@ -1,21 +1,88 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Test Lottie</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vote Page</title>
   <script src="https://unpkg.com/lottie-web@5.7.4/build/player/lottie.min.js"></script>
+  <style>
+    body {
+      background-color: #fff9c4; /* Light yellow */
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    #voteCount {
+      font-size: 20px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    #lottie {
+      width: 250px;
+      height: 250px;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffeb3b;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #fdd835;
+    }
+  </style>
 </head>
-<body style="background:#fff9c4;display:flex;justify-content:center;align-items:center;height:100vh;">
+<body>
 
-  <div id="lottie" style="width:300px;height:300px;"></div>
+  <div id="voteCount">Votes: <span id="count">0</span></div>
+  <div id="lottie"></div>
+  <p>Insufficient votes to launch this website. Stay tuned for updates!</p>
+  <button onclick="vote()">Vote</button>
 
   <script>
-    lottie.loadAnimation({
-      container: document.getElementById('lottie'),
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      path: 'https://saiful3278.github.io/saiful/Hi.json'
-    });
+  // Load the Lottie animation
+  lottie.loadAnimation({
+    container: document.getElementById('lottie'),
+    renderer: 'svg',
+    loop: true,
+    autoplay: true,
+    path: 'https://saiful3278.github.io/saiful/Hi.js' // update with real repo name
+  });
+
+  // Set initial vote count to 22 (simulate starting point)
+  let votes = localStorage.getItem('votesCount') || 22;
+
+  // Prevent override if already voted and count is higher
+  if (parseInt(votes) < 22) {
+    votes = 22;
+    localStorage.setItem('votesCount', votes);
+  }
+
+  document.getElementById('count').textContent = votes;
+
+  function vote() {
+    if (localStorage.getItem('hasVoted')) {
+      alert("You've already voted. Thanks!");
+      return;
+    }
+
+    votes++;
+    localStorage.setItem('votesCount', votes);
+    localStorage.setItem('hasVoted', 'true');
+    document.getElementById('count').textContent = votes;
+  }
   </script>
 
 </body>
