@@ -1,4 +1,4 @@
-p<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,7 @@ p<!DOCTYPE html>
   <script src="https://unpkg.com/lottie-web@5.7.4/build/player/lottie.min.js"></script>
   <style>
     body {
-      background-color: #fff9c4; /* Light yellow */
+      background-color: #fff9c4;
       margin: 0;
       font-family: Arial, sans-serif;
       display: flex;
@@ -16,7 +16,7 @@ p<!DOCTYPE html>
       justify-content: center;
       height: 100vh;
       text-align: center;
-      padding-top: 70px; /* space for toolbar */
+      padding-top: 70px;
     }
 
     #toolbar {
@@ -63,6 +63,27 @@ p<!DOCTYPE html>
     button:hover {
       background-color: #fdd835;
     }
+
+    footer {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    /* Media query for small screens */
+    @media (max-width: 600px) {
+      #lottie {
+        width: 200px;
+        height: 200px;
+      }
+
+      #voteCount {
+        font-size: 18px;
+      }
+
+      button {
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -77,22 +98,15 @@ p<!DOCTYPE html>
   <button onclick="vote()">Vote</button>
 
   <script>
-    // Load the Lottie animation
     lottie.loadAnimation({
       container: document.getElementById('lottie'),
       renderer: 'svg',
       loop: true,
       autoplay: true,
-      path: 'Hi.json' // Local Lottie file
+      path: 'Hi.json'
     });
 
-    let votes = localStorage.getItem('votesCount') || 22;
-
-    if (parseInt(votes) < 22) {
-      votes = 22;
-      localStorage.setItem('votesCount', votes);
-    }
-
+    let votes = parseInt(localStorage.getItem('votesCount')) || 22;
     document.getElementById('count').textContent = votes;
 
     function vote() {
@@ -107,9 +121,9 @@ p<!DOCTYPE html>
       document.getElementById('count').textContent = votes;
     }
   </script>
-<footer>
-<p>Made with❤️</p>
 
-</footer>
+  <footer>
+    <p>Made with ❤️</p>
+  </footer>
 </body>
 </html>
