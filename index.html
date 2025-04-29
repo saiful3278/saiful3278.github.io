@@ -1,22 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weird Stuff</title>
-    <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Vote Page</title>
+  <script src="https://unpkg.com/lottie-web@5.7.4/build/player/lottie.min.js"></script>
+  <style>
+    body {
+      background-color: #fff9c4; /* Light yellow */
+      margin: 0;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    #voteCount {
+      font-size: 20px;
+      margin-bottom: 20px;
+      font-weight: bold;
+    }
+    #lottie {
+      width: 250px;
+      height: 250px;
+      margin-bottom: 20px;
+    }
+    p {
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #ffeb3b;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #fdd835;
+    }
+  </style>
 </head>
 <body>
-    <div class="content">
-        <h1>Welcome to the Weird Stuff Page</h1>
-        <div class="weird">
-            <p>Have you ever wondered if a chair could fly?</p>
-            <p>What happens when you mix spaghetti with a rainbow?</p>
-            <p>Do cows dream of electric grass?</p>
-            <p>Is the moon made of cheese? Who knows!</p>
-            <p>Here’s a random thought: Can you taste the color purple?</p>
-        </div>
-    </div>
-    <a href="https://raw.githubusercontent.com/saiful3278/saiful3278.github.io/main/app.zip" class="contact-btn" download="app.zip">Contact Us</a>
+
+  <div id="voteCount">Votes: <span id="count">0</span></div>
+  <div id="lottie"></div>
+  <p>Insufficient votes to launch this website. Stay tuned for updates!</p>
+  <button onclick="vote()">Vote</button>
+
+  <script>
+    // Load the Lottie animation
+    lottie.loadAnimation({
+      container: document.getElementById('lottie'),
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'hi.json' // Make sure this file is in the same directory
+    });
+
+    // Simple local vote counter
+    let votes = localStorage.getItem('votes') || 0;
+    document.getElementById('count').textContent = votes;
+
+    function vote() {
+      votes++;
+      localStorage.setItem('votes', votes);
+      document.getElementById('count').textContent = votes;
+    }
+  </script>
+
 </body>
 </html>
