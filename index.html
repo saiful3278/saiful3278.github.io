@@ -7,7 +7,7 @@
   <script src="https://unpkg.com/lottie-web@5.7.4/build/player/lottie.min.js"></script>
   <style>
     body {
-      background-color: #fff9c4; /* Light yellow */
+      background-color: #fff9c4;
       margin: 0;
       font-family: Arial, sans-serif;
       display: flex;
@@ -46,43 +46,41 @@
 </head>
 <body>
 
-  <div id="voteCount">Votes: <span id="count">0</span></div>
+  <div id="voteCount">Votes: <span id="count">22</span></div>
   <div id="lottie"></div>
   <p>Insufficient votes to launch this website. Stay tuned for updates!</p>
   <button onclick="vote()">Vote</button>
 
   <script>
-  // Load the Lottie animation
-  lottie.loadAnimation({
-    container: document.getElementById('lottie'),
-    renderer: 'svg',
-    loop: true,
-    autoplay: true,
-    path: 'https://saiful3278.github.io/saiful/Hi.js' // update with real repo name
-  });
+    // Load the Lottie animation
+    lottie.loadAnimation({
+      container: document.getElementById('lottie'),
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      path: 'https://raw.githubusercontent.com/saiful3278/saiful/main/Hi.json' // This is correct!
+    });
 
-  // Set initial vote count to 22 (simulate starting point)
-  let votes = localStorage.getItem('votesCount') || 22;
+    let votes = localStorage.getItem('votesCount') || 22;
 
-  // Prevent override if already voted and count is higher
-  if (parseInt(votes) < 22) {
-    votes = 22;
-    localStorage.setItem('votesCount', votes);
-  }
-
-  document.getElementById('count').textContent = votes;
-
-  function vote() {
-    if (localStorage.getItem('hasVoted')) {
-      alert("You've already voted. Thanks!");
-      return;
+    if (parseInt(votes) < 22) {
+      votes = 22;
+      localStorage.setItem('votesCount', votes);
     }
 
-    votes++;
-    localStorage.setItem('votesCount', votes);
-    localStorage.setItem('hasVoted', 'true');
     document.getElementById('count').textContent = votes;
-  }
+
+    function vote() {
+      if (localStorage.getItem('hasVoted')) {
+        alert("You've already voted. Thanks!");
+        return;
+      }
+
+      votes++;
+      localStorage.setItem('votesCount', votes);
+      localStorage.setItem('hasVoted', 'true');
+      document.getElementById('count').textContent = votes;
+    }
   </script>
 
 </body>
