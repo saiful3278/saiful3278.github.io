@@ -52,24 +52,35 @@
   <button onclick="vote()">Vote</button>
 
   <script>
-    // Load the Lottie animation
-    lottie.loadAnimation({
-      container: document.getElementById('lottie'),
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      path: 'path: 'https://saiful3278.github.io/your-repo-name/Hi.json'' // Make sure this file is in the same directory
-    });
+  // Load the Lottie animation
+  lottie.loadAnimation({
+    container: document.getElementById('lottie'),
+    renderer: 'svg',
+    loop: true,
+    autoplay: true,
+    path: 'https://saiful3278.github.io/your-repo-name/Hi.json' // change this!
+  });
 
-    // Simple local vote counter
-    let votes = localStorage.getItem('votes') || 0;
-    document.getElementById('count').textContent = votes;
+  // Local vote count (faked for static page)
+  let votes = localStorage.getItem('votesCount') || 0;
+  document.getElementById('count').textContent = votes;
 
-    function vote() {
-      votes++;
-      localStorage.setItem('votes', votes);
-      document.getElementById('count').textContent = votes;
+  // Check if this device already voted
+  const hasVoted = localStorage.getItem('hasVoted');
+
+  function vote() {
+    if (hasVoted) {
+      alert("You've already voted. Thanks!");
+      return;
     }
+
+    // Increase vote count (client-side only)
+    votes++;
+    localStorage.setItem('votesCount', votes);
+    localStorage.setItem('hasVoted', 'true');
+
+    document.getElementById('count').textContent = votes;
+  }
   </script>
 
 </body>
