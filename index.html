@@ -7,10 +7,7 @@
   <script src="https://unpkg.com/lottie-web@5.7.4/build/player/lottie.min.js"></script>
   <style>
     body {
-      <div id="toolbar">
-  <img src="20250429_231018.png" alt="Logo" />
-</div>
-      background-color: #fff9c4;
+      background-color: #fff9c4; /* Light yellow */
       margin: 0;
       font-family: Arial, sans-serif;
       display: flex;
@@ -19,21 +16,41 @@
       justify-content: center;
       height: 100vh;
       text-align: center;
+      padding-top: 70px; /* space for toolbar */
     }
+
+    #toolbar {
+      width: 100%;
+      background-color: #fff176;
+      padding: 10px 0;
+      text-align: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+
+    #toolbar img {
+      height: 40px;
+    }
+
     #voteCount {
       font-size: 20px;
       margin-bottom: 20px;
       font-weight: bold;
     }
+
     #lottie {
       width: 250px;
       height: 250px;
       margin-bottom: 20px;
     }
+
     p {
       font-size: 16px;
       margin-bottom: 20px;
     }
+
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -42,12 +59,17 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #fdd835;
     }
   </style>
 </head>
 <body>
+
+  <div id="toolbar">
+    <img src="20250429_231018.png" alt="Logo" />
+  </div>
 
   <div id="voteCount">Votes: <span id="count">22</span></div>
   <div id="lottie"></div>
@@ -61,7 +83,7 @@
       renderer: 'svg',
       loop: true,
       autoplay: true,
-      path: 'Hi.json' // This is correct!
+      path: 'Hi.json' // Local Lottie file
     });
 
     let votes = localStorage.getItem('votesCount') || 22;
