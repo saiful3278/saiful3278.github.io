@@ -1,98 +1,593 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TOTP Authenticator</title>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-database-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib.umd.min.js"></script>
-  <style>
-    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
-    .entry { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
-    .code { font-size: 1.5rem; font-weight: bold; }
-    input, button { padding: 0.5rem; margin: 0.25rem 0; width: 100%; }
-    .row { display: flex; gap: 0.5rem; }
-    .row button { flex: 1; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Authenticator</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/dist/otplib.browser.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background-color: #4285f4;
+            color: white;
+            border-radius: 8px;
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 500;
+        }
+        
+        .account-list {
+            margin-bottom: 30px;
+        }
+        
+        .account-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .account-info {
+            flex-grow: 1;
+        }
+        
+        .account-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .account-code {
+            font-size: 24px;
+            letter-spacing: 3px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        
+        .account-timer {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+        
+        .timer-bar {
+            height: 4px;
+            background-color: #e0e0e0;
+            border-radius: 2px;
+            margin-left: 10px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        .timer-progress {
+            height: 100%;
+            background-color: #4285f4;
+            border-radius: 2px;
+            transition: width 1s linear;
+        }
+        
+        .account-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #3367d6;
+        }
+        
+        .btn-danger {
+            background-color: #ea4335;
+        }
+        
+        .btn-danger:hover {
+            background-color: #d33b2c;
+        }
+        
+        .btn-secondary {
+            background-color: #fbbc05;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e0a800;
+        }
+        
+        .btn-add {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid #4285f4;
+            color: #4285f4;
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        #qr-reader {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            z-index: 2000;
+        }
+        
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
-  <h2>My Authenticator</h2>
-  <div id="entries"></div>
-
-  <h3>Add Secret</h3>
-  <input id="label" placeholder="Label (e.g., GitHub)" />
-  <input id="secret" placeholder="Base32 Secret (e.g., JBSWY3DPEHPK3PXP)" />
-  <button onclick="addEntry()">Add</button>
-
-  <script>
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const ref = db.ref("totp_keys");
-
-    function renderEntry(id, label, secret) {
-      const div = document.createElement("div");
-      div.className = "entry";
-      div.id = id;
-      div.innerHTML = `
-        <div><strong>${label}</strong></div>
-        <div class="code" id="code-${id}">------</div>
-        <div class="row">
-          <button onclick="editEntry('${id}', '${label}', '${secret}')">Edit</button>
-          <button onclick="deleteEntry('${id}')">Delete</button>
+    <div class="container">
+        <header>
+            <h1>Web Authenticator</h1>
+        </header>
+        
+        <main>
+            <div class="account-list" id="accountList">
+                <div class="empty-state">
+                    <p>No accounts added yet. Click the button below to add your first account.</p>
+                </div>
+            </div>
+            
+            <button class="btn btn-add" id="addAccountBtn">Add Account</button>
+        </main>
+    </div>
+    
+    <!-- Add/Edit Account Modal -->
+    <div class="modal" id="accountModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add Account</h2>
+                <button class="close-btn" id="closeModalBtn">&times;</button>
+            </div>
+            
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="manual">Manual Entry</div>
+                    <div class="tab" data-tab="qr">Scan QR Code</div>
+                </div>
+                
+                <div class="tab-content active" id="manual-tab">
+                    <form id="accountForm">
+                        <div class="form-group">
+                            <label for="accountName">Account Name</label>
+                            <input type="text" id="accountName" placeholder="e.g., Google, GitHub" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="accountSecret">Secret Key</label>
+                            <input type="text" id="accountSecret" placeholder="Base32 secret key" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn" id="saveAccountBtn">Save Account</button>
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="tab-content" id="qr-tab">
+                    <div id="qr-reader"></div>
+                    <div class="form-group" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="cancelQrBtn">Cancel</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      `;
-      document.getElementById("entries").appendChild(div);
-      updateCode(id, secret);
-    }
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
 
-    function updateCode(id, secret) {
-      const update = () => {
-        const code = otplib.authenticator.generate(secret);
-        document.getElementById(`code-${id}`).textContent = code;
-      };
-      update();
-      setInterval(update, 1000);
-    }
-
-    function addEntry() {
-      const label = document.getElementById("label").value.trim();
-      const secret = document.getElementById("secret").value.trim().replace(/\s/g, "");
-      if (!label || !secret) return alert("Both fields required");
-      const id = ref.push().key;
-      ref.child(id).set({ label, secret });
-      document.getElementById("label").value = "";
-      document.getElementById("secret").value = "";
-    }
-
-    function editEntry(id, oldLabel, oldSecret) {
-      const label = prompt("Edit label", oldLabel);
-      const secret = prompt("Edit secret", oldSecret);
-      if (label && secret) ref.child(id).set({ label, secret });
-    }
-
-    function deleteEntry(id) {
-      if (confirm("Delete this entry?")) ref.child(id).remove();
-    }
-
-    ref.on("value", snapshot => {
-      const entries = snapshot.val() || {};
-      document.getElementById("entries").innerHTML = "";
-      for (const id in entries) {
-        renderEntry(id, entries[id].label, entries[id].secret);
-      }
-    });
-  </script>
-</body>
-</html>
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // DOM Elements
+        const accountList = document.getElementById('accountList');
+        const addAccountBtn = document.getElementById('addAccountBtn');
+        const accountModal = document.getElementById('accountModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const accountForm = document.getElementById('accountForm');
+        const accountNameInput = document.getElementById('accountName');
+        const accountSecretInput = document.getElementById('accountSecret');
+        const modalTitle = document.getElementById('modalTitle');
+        const saveAccountBtn = document.getElementById('saveAccountBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const cancelQrBtn = document.getElementById('cancelQrBtn');
+        const notification = document.getElementById('notification');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // State
+        let accounts = [];
+        let editingAccountId = null;
+        let html5QrCode = null;
+        let updateInterval = null;
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAccounts();
+            setupEventListeners();
+            startCodeUpdates();
+        });
+        
+        // Event Listeners
+        function setupEventListeners() {
+            addAccountBtn.addEventListener('click', openAddAccountModal);
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            cancelQrBtn.addEventListener('click', closeModal);
+            accountForm.addEventListener('submit', saveAccount);
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+            
+            accountModal.addEventListener('click', (e) => {
+                if (e.target === accountModal) {
+                    closeModal();
+                }
+            });
+        }
+        
+        // Tab Switching
+        function switchTab(tabName) {
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            tabContents.forEach(content => {
+                if (content.id === `${tabName}-tab`) {
+                    content.classList.add('active');
+                    
+                    // Start QR scanner if switching to QR tab
+                    if (tabName === 'qr') {
+                        startQrScanner();
+                    }
+                } else {
+                    content.classList.remove('active');
+                    
+                    // Stop QR scanner if switching away from QR tab
+                    if (tabName === 'qr' && html5QrCode) {
+                        stopQrScanner();
+                    }
+                }
+            });
+        }
+        
+        // QR Scanner
+        function startQrScanner() {
+            const qrReaderElement = document.getElementById('qr-reader');
+            qrReaderElement.innerHTML = '';
+            
+            html5QrCode = new Html5Qrcode("qr-reader");
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 }
+                },
+                (decodedText, decodedResult) => {
+                    // Process the QR code
+                    processQrCode(decodedText);
+                },
+                (errorMessage) => {
+                    // Handle scan error silently
+                }
+            ).catch(err => {
+                console.error(`Unable to start scanning: ${err}`);
+                showNotification('Unable to access camera. Please check permissions.', 'error');
+            });
+        }
+        
+        function stopQrScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    html5QrCode.clear();
+                }).catch(err => {
+                    console.error(`Unable to stop scanning: ${err}`);
+                });
+                html5QrCode = null;
+            }
+        }
+        
+        function processQrCode(qrText) {
+            try {
+                // Check if it's a TOTP URI
+                if (qrText.startsWith('otpauth://totp/')) {
+                    const url = new URL(qrText);
+                    const params = new URLSearchParams(url.search);
+                    const secret = params.get('secret');
+                    const accountName = decodeURIComponent(url.pathname.split('/')[1]);
+                    
+                    if (secret) {
+                        accountNameInput.value = accountName;
+                        accountSecretInput.value = secret;
+                        switchTab('manual');
+                        showNotification('QR code scanned successfully!', 'success');
+                    } else {
+                        showNotification('Invalid QR code: Missing secret', 'error');
+                    }
+                } else {
+                    // Try to extract base32 secret directly
+                    const base32Regex = /^[A-Z2-7]+=*$/i;
+                    if (base32Regex.test(qrText)) {
+                        accountSecretInput.value = qrText;
+                        switchTab('manual');
+                        showNotification('Secret extracted from QR code!', 'success');
+                    } else {
+                        showNotification('Invalid QR code format', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Error processing QR code:', error);
+                showNotification('Error processing QR code', 'error');
+            }
+        }
+        
+        // Firebase Functions
+        function fetchAccounts() {
+            db.collection('accounts').get()
+                .then(querySnapshot => {
+                    accounts = [];
+                    querySnapshot.forEach(doc => {
+                        accounts.push({
+                            id: doc.id,
+                            ...doc.data()
+                        });
+                    });
+                    renderAccounts();
+                })
+                .catch(error => {
+                    console.error('Error fetching accounts:', error);
+                    showNotification('Error loading accounts', 'error');
+                });
+        }
+        
+        function addAccount(name, secret) {
+            db.collection('accounts').add({
+                name: name,
+                secret: secret,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(docRef => {
+                showNotification('Account added successfully!', 'success');
+                fetchAccounts();
+                closeModal();
+            })
+            .catch(error => {
+                console.error('Error adding account:', error);
+                showNotification('Error adding account', 'error');
+            });
+        }
+        
+        function updateAccount(id, name, secret) {
+            db.collection('accounts').doc(id).update({
+                name: name,
+                secret: secret,
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            .then(() => {
+                showNotification('Account updated successfully!', 'success');
+                fetchAccounts();
+                closeModal();
+            })
+            .catch(error => {
+                console.error('Error updating account:', error);
+                showNotification('Error updating account', 'error');
+            });
+        }
+        
+        function deleteAccount(id) {
+            if (confirm('Are you sure you want to delete this account?')) {
+                db.collection('accounts').doc(id).delete()
+                    .then(() => {
+                        showNotification('Account deleted successfully!', 'success');
+                        fetchAccounts();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting account:', error);
+                        showNotification('Error deleting account', 'error');
+                    });
+            }
+        }
+        
+        // UI Functions
+        function renderAccounts() {
+            if (accounts.length === 0) {
+                accountList.innerHTML = `
+                    <div class="empty-state">
+                        <p>No accounts added yet. Click the button below to add your first account.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            accountList.innerHTML = accounts.map(account => {
+                const code = generateTOTP(account.secret);
+                const timeRemaining = getTimeRemaining();
+                
+                return `
+                    <div class="account-item">
+                        <div class="account-info">
+                            <div class="account-name">${account.name}</div>
+                            <div class="account-code" id="code-${account.id}">${code}</div>
+                            <div class="account-timer">
+                                <span>Time remaining: ${timeRemaining}s</span>
+                                <div class="timer-bar">
+                                    <div class="timer-progress" id="timer-${account.id}" style="width: ${(timeRemaining / 30) * 100}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="account-actions">
+                            <button class="btn" id="edit-${account.id}">Edit</button>
+                            <button class="btn btn-danger" id="delete-${account.id}">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Add event listeners to edit and delete buttons
+            accounts.forEach(account => {
+                document.getElementById(`edit-${account.id}`).addEventListener('click', () => openEditAccountModal(account));
