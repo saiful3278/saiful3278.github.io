@@ -1,1 +1,98 @@
-a
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOTP Authenticator</title>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
+    .entry { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    .code { font-size: 1.5rem; font-weight: bold; }
+    input, button { padding: 0.5rem; margin: 0.25rem 0; width: 100%; }
+    .row { display: flex; gap: 0.5rem; }
+    .row button { flex: 1; }
+  </style>
+</head>
+<body>
+  <h2>My Authenticator</h2>
+  <div id="entries"></div>
+
+  <h3>Add Secret</h3>
+  <input id="label" placeholder="Label (e.g., GitHub)" />
+  <input id="secret" placeholder="Base32 Secret (e.g., JBSWY3DPEHPK3PXP)" />
+  <button onclick="addEntry()">Add</button>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const ref = db.ref("totp_keys");
+
+    function renderEntry(id, label, secret) {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.id = id;
+      div.innerHTML = `
+        <div><strong>${label}</strong></div>
+        <div class="code" id="code-${id}">------</div>
+        <div class="row">
+          <button onclick="editEntry('${id}', '${label}', '${secret}')">Edit</button>
+          <button onclick="deleteEntry('${id}')">Delete</button>
+        </div>
+      `;
+      document.getElementById("entries").appendChild(div);
+      updateCode(id, secret);
+    }
+
+    function updateCode(id, secret) {
+      const update = () => {
+        const code = otplib.authenticator.generate(secret);
+        document.getElementById(`code-${id}`).textContent = code;
+      };
+      update();
+      setInterval(update, 1000);
+    }
+
+    function addEntry() {
+      const label = document.getElementById("label").value.trim();
+      const secret = document.getElementById("secret").value.trim().replace(/\s/g, "");
+      if (!label || !secret) return alert("Both fields required");
+      const id = ref.push().key;
+      ref.child(id).set({ label, secret });
+      document.getElementById("label").value = "";
+      document.getElementById("secret").value = "";
+    }
+
+    function editEntry(id, oldLabel, oldSecret) {
+      const label = prompt("Edit label", oldLabel);
+      const secret = prompt("Edit secret", oldSecret);
+      if (label && secret) ref.child(id).set({ label, secret });
+    }
+
+    function deleteEntry(id) {
+      if (confirm("Delete this entry?")) ref.child(id).remove();
+    }
+
+    ref.on("value", snapshot => {
+      const entries = snapshot.val() || {};
+      document.getElementById("entries").innerHTML = "";
+      for (const id in entries) {
+        renderEntry(id, entries[id].label, entries[id].secret);
+      }
+    });
+  </script>
+</body>
+</html>
